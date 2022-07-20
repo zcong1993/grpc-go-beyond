@@ -1,0 +1,83 @@
+linters:
+  enable:
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+
+    - gocritic
+    - stylecheck
+    - exportloopref
+    - revive
+linters-settings:
+  gocritic:
+    enabled-tags:
+      - style
+      - diagnostic
+      - performance
+    disabled-checks:
+      - commentFormatting
+      - emptyStringTest
+      - sloppyReassign
+      - commentedOutCode
+    settings:
+      hugeParam:
+        sizeThreshold: 250
+  errcheck:
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+    # Such cases aren't reported by default.
+    # Default: false
+    #    check-type-assertions: true
+    # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`.
+    # Such cases aren't reported by default.
+    # Default: false
+    check-blank: true
+  revive:
+    rules:
+      - name: unexported-return
+        disabled: true
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - linters:
+        - stylecheck
+      text: 'ST1003:'
+    - path: _test\.go
+      linters:
+        - scopelint
+      text: 'range scope `' # for table tests
+    - path: _test\.go
+      linters:
+        - structcheck
+        - unused
+      text: 'is unused'
+    - path: _test\.go
+      linters:
+        - errcheck
+      text: 'is not checked'
+    - path: .
+      linters:
+        - stylecheck
+      text: 'have a package comment'
+    - linters:
+        - structcheck
+        - unused
+      text: '`noCopy` is unused'
+
+run:
+  go: '1.17' # todo: golangci-lint for 1.18 is unstable now
+  skip-dirs:
+    - gen
+    - vendor
+    - internal/design
+    - .*mocks
+    - .*generated.*
+  skip-files:
+# IGNORE_FILES_START
+# IGNORE_FILES_END

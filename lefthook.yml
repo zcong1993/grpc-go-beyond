@@ -1,0 +1,10 @@
+pre-commit:
+  commands:
+    goimports:
+      glob: "*.go"
+      run: source .bingo/variables.env && $GOIMPORTS -local "github.com/zcong1993/template-go-cli" -w {staged_files} && git add {staged_files}
+
+    lint:
+      glob: "*.go"
+      # consume {staged_files} so this command will trigger only when any *.go changed
+      run: source .bingo/variables.env && $GOLANGCI_LINT run --fast --fix && git add {staged_files}

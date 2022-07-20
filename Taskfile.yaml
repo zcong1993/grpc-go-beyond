@@ -1,0 +1,14 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  setup:
+    cmds:
+      - go install github.com/bwplotka/bingo@v0.6.0
+      - bingo get
+      - source .bingo/variables.env && $LEFTHOOK install
+
+  lint:
+    cmds:
+      - source .bingo/variables.env && $GOLANGCI_LINT run --fast --fix
