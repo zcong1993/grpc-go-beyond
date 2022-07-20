@@ -16,7 +16,7 @@ import (
 func main() {
 	addr := flag.String("addr", "localhost:8888", "server addr")
 	method := flag.String("method", "Echo", "test method: Echo | ServerStream | ClientStream | DuplexStream")
-	clientType := flag.String("type", "stream", "client type: stream | raw | default")
+	clientType := flag.String("type", "", "client type: stream | raw | default")
 	codecType := flag.String("codec", "", "codec type: json, default is proto")
 
 	flag.Parse()
