@@ -63,10 +63,6 @@ func (g *GenericClient) ServerStream(ctx context.Context, in *pb.EchoRequest, op
 		return nil, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	x := &ss{ClientStream: cs}
 
 	if err := x.ClientStream.SendMsg(in); err != nil {
