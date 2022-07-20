@@ -3,8 +3,9 @@ package client
 import (
 	"context"
 
-	"github.com/zcong1993/grpc-go-beyond/pb"
 	"google.golang.org/grpc"
+
+	"github.com/zcong1993/grpc-go-beyond/pb"
 )
 
 type StreamClient struct {

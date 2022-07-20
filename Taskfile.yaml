@@ -3,6 +3,10 @@
 version: '3'
 
 tasks:
+  format:
+    cmds:
+      - source .bingo/variables.env && $GOIMPORTS -local "github.com/zcong1993/grpc-go-beyond" -w .
+
   setup:
     cmds:
       - go install github.com/bwplotka/bingo@v0.6.0

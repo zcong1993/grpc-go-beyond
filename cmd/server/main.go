@@ -5,11 +5,13 @@ import (
 	"log"
 	"net"
 
-	"github.com/zcong1993/grpc-go-beyond/internal/server"
-	"github.com/zcong1993/grpc-go-beyond/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/channelz/service"
 	"google.golang.org/grpc/reflection"
+
+	_ "github.com/zcong1993/grpc-go-beyond/internal/codec"
+	"github.com/zcong1993/grpc-go-beyond/internal/server"
+	"github.com/zcong1993/grpc-go-beyond/pb"
 )
 
 func main() {

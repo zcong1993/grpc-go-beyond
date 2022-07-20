@@ -7,8 +7,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/zcong1993/grpc-go-beyond/pb"
 	"google.golang.org/grpc"
+
+	"github.com/zcong1993/grpc-go-beyond/pb"
 )
 
 var desc = &grpc.StreamDesc{

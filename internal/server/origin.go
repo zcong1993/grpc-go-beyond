@@ -1,7 +1,7 @@
 package server
 
 import (
-	context "context"
+	"context"
 	"fmt"
 	"io"
 

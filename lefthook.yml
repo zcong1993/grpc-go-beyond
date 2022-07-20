@@ -2,7 +2,7 @@ pre-commit:
   commands:
     goimports:
       glob: "*.go"
-      run: source .bingo/variables.env && $GOIMPORTS -local "github.com/zcong1993/template-go-cli" -w {staged_files} && git add {staged_files}
+      run: source .bingo/variables.env && $GOIMPORTS -local "github.com/zcong1993/grpc-go-beyond" -w {staged_files} && git add {staged_files}
 
     lint:
       glob: "*.go"

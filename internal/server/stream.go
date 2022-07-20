@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/zcong1993/grpc-go-beyond/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/zcong1993/grpc-go-beyond/pb"
 )
 
 func Handler() grpc.StreamHandler {
