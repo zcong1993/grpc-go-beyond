@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "github.com/zcong1993/grpc-go-beyond/pb";
+
+
+message EchoRequest {
+  string message = 1;
+}
+
+service Hello {
+  rpc Echo(EchoRequest) returns (EchoRequest);
+  rpc ServerStream(EchoRequest) returns (stream EchoRequest);
+  rpc ClientStream(stream EchoRequest) returns (EchoRequest);
+  rpc DuplexStream(stream EchoRequest) returns (stream EchoRequest);
+}
