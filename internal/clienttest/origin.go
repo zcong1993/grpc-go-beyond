@@ -6,6 +6,9 @@ import (
 	"io"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+
 	"github.com/zcong1993/grpc-go-beyond/pb"
 )
 
@@ -25,10 +28,13 @@ func (h *HelloClientTester) TestEcho() {
 	req := &pb.EchoRequest{Message: "test"}
 
 	for {
-		resp, err := h.c.Echo(h.ctx, req)
+		var header, trailer metadata.MD
+		resp, err := h.c.Echo(h.ctx, req, grpc.Header(&header), grpc.Trailer(&trailer))
 		checkErr(err)
 		fmt.Println("send: ", req)
 		fmt.Println("recv: ", resp)
+		fmt.Println("header: ", header)
+		fmt.Println("trailer: ", trailer)
 		time.Sleep(time.Second * 5)
 	}
 }
@@ -50,6 +56,10 @@ func (h *HelloClientTester) TestServerStream() {
 
 		fmt.Println("recv: ", rr)
 	}
+	md, err := ss.Header()
+	checkErr(err)
+	fmt.Println("header: ", md)
+	fmt.Println("trailer: ", ss.Trailer())
 }
 
 func (h *HelloClientTester) TestClientStream() {
@@ -66,6 +76,10 @@ func (h *HelloClientTester) TestClientStream() {
 	resp, err := s.CloseAndRecv()
 	checkErr(err)
 	fmt.Println("recv: ", resp)
+	md, err := s.Header()
+	checkErr(err)
+	fmt.Println("header: ", md)
+	fmt.Println("trailer: ", s.Trailer())
 }
 
 func (h *HelloClientTester) TestDuplexStream() {
@@ -87,6 +101,10 @@ func (h *HelloClientTester) TestDuplexStream() {
 
 			fmt.Println("recv: ", rr)
 		}
+		md, err := s.Header()
+		checkErr(err)
+		fmt.Println("header: ", md)
+		fmt.Println("trailer: ", s.Trailer())
 		ch <- struct{}{}
 	}()
 

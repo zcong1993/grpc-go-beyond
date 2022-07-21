@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 
+	"google.golang.org/grpc/metadata"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -55,6 +57,10 @@ func (s *stream) handleServerStream() error {
 		return err
 	}
 	fmt.Println("recv: ", &req)
+	err = s.serverStream.SendHeader(metadata.New(map[string]string{"aaa": "aaa"}))
+	if err != nil {
+		fmt.Println("xxx", err)
+	}
 
 	for i := 0; i < 5; i++ {
 		err := s.serverStream.SendMsg(&req)
