@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"google.golang.org/grpc/metadata"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -47,6 +45,13 @@ func (s *stream) handleEcho() error {
 	if err != nil {
 		return err
 	}
+	err = s.serverStream.SendHeader(header)
+	if err != nil {
+		return err
+	}
+
+	defer s.serverStream.SetTrailer(trailer)
+
 	return s.serverStream.SendMsg(&req)
 }
 
@@ -57,10 +62,12 @@ func (s *stream) handleServerStream() error {
 		return err
 	}
 	fmt.Println("recv: ", &req)
-	err = s.serverStream.SendHeader(metadata.New(map[string]string{"aaa": "aaa"}))
+	err = s.serverStream.SendHeader(header)
 	if err != nil {
-		fmt.Println("xxx", err)
+		return err
 	}
+
+	defer s.serverStream.SetTrailer(trailer)
 
 	for i := 0; i < 5; i++ {
 		err := s.serverStream.SendMsg(&req)
@@ -87,11 +94,18 @@ func (s *stream) handleClientStream() error {
 		fmt.Println("recv: ", req)
 		last = req
 	}
+
+	err := s.serverStream.SendHeader(header)
+	if err != nil {
+		return err
+	}
 	fmt.Println("send: ", last)
+	defer s.serverStream.SetTrailer(trailer)
 	return s.serverStream.SendMsg(last)
 }
 
 func (s *stream) handleDuplexStream() error {
+	headerSent := false
 	for {
 		req := new(pb.EchoRequest)
 		err := s.serverStream.RecvMsg(req)
@@ -104,12 +118,22 @@ func (s *stream) handleDuplexStream() error {
 
 		fmt.Println("recv: ", req)
 
+		if !headerSent {
+			headerSent = true
+			err := s.serverStream.SendHeader(header)
+			if err != nil {
+				return err
+			}
+		}
+
 		err2 := s.serverStream.SendMsg(req)
 		if err2 != nil {
 			return err2
 		}
 		fmt.Println("send: ", req)
 	}
+
+	s.serverStream.SetTrailer(trailer)
 
 	return nil
 }
