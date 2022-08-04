@@ -46,6 +46,10 @@ func (h *HelloClientTester) TestServerStream() {
 	checkErr(err)
 	fmt.Println("send: ", req)
 
+	md, err := ss.Header()
+	checkErr(err)
+	fmt.Println("header: ", md)
+
 	for {
 		rr, err := ss.Recv()
 		if err == io.EOF {
@@ -56,9 +60,7 @@ func (h *HelloClientTester) TestServerStream() {
 
 		fmt.Println("recv: ", rr)
 	}
-	md, err := ss.Header()
-	checkErr(err)
-	fmt.Println("header: ", md)
+
 	fmt.Println("trailer: ", ss.Trailer())
 }
 
@@ -73,12 +75,14 @@ func (h *HelloClientTester) TestClientStream() {
 		checkErr(err)
 		fmt.Println("send: ", req)
 	}
-	resp, err := s.CloseAndRecv()
-	checkErr(err)
-	fmt.Println("recv: ", resp)
+
 	md, err := s.Header()
 	checkErr(err)
 	fmt.Println("header: ", md)
+
+	resp, err := s.CloseAndRecv()
+	checkErr(err)
+	fmt.Println("recv: ", resp)
 	fmt.Println("trailer: ", s.Trailer())
 }
 
@@ -91,6 +95,10 @@ func (h *HelloClientTester) TestDuplexStream() {
 	ch := make(chan struct{})
 
 	go func() {
+		md, err := s.Header()
+		checkErr(err)
+		fmt.Println("header: ", md)
+
 		for {
 			rr, err := s.Recv()
 			if err == io.EOF {
@@ -101,9 +109,7 @@ func (h *HelloClientTester) TestDuplexStream() {
 
 			fmt.Println("recv: ", rr)
 		}
-		md, err := s.Header()
-		checkErr(err)
-		fmt.Println("header: ", md)
+
 		fmt.Println("trailer: ", s.Trailer())
 		ch <- struct{}{}
 	}()
