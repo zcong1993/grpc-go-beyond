@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/zcong1993/grpc-go-beyond/pb"
@@ -40,6 +41,10 @@ type stream struct {
 }
 
 func (s *stream) handleEcho() error {
+	if md, ok := metadata.FromIncomingContext(s.serverStream.Context()); ok {
+		fmt.Println("metadata: ", md)
+	}
+
 	var req pb.EchoRequest
 	err := s.serverStream.RecvMsg(&req)
 	if err != nil {
@@ -56,6 +61,10 @@ func (s *stream) handleEcho() error {
 }
 
 func (s *stream) handleServerStream() error {
+	if md, ok := metadata.FromIncomingContext(s.serverStream.Context()); ok {
+		fmt.Println("metadata: ", md)
+	}
+
 	var req pb.EchoRequest
 	err := s.serverStream.RecvMsg(&req)
 	if err != nil {
@@ -81,6 +90,10 @@ func (s *stream) handleServerStream() error {
 }
 
 func (s *stream) handleClientStream() error {
+	if md, ok := metadata.FromIncomingContext(s.serverStream.Context()); ok {
+		fmt.Println("metadata: ", md)
+	}
+
 	var last *pb.EchoRequest
 	for {
 		req := new(pb.EchoRequest)
@@ -105,6 +118,10 @@ func (s *stream) handleClientStream() error {
 }
 
 func (s *stream) handleDuplexStream() error {
+	if md, ok := metadata.FromIncomingContext(s.serverStream.Context()); ok {
+		fmt.Println("metadata: ", md)
+	}
+
 	headerSent := false
 	for {
 		req := new(pb.EchoRequest)

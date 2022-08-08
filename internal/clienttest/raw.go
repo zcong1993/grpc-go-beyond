@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/zcong1993/grpc-go-beyond/pb"
 )
@@ -25,7 +26,7 @@ type RawTester struct {
 func NewRawTester(conn grpc.ClientConnInterface) *RawTester {
 	return &RawTester{
 		conn: conn,
-		ctx:  context.Background(),
+		ctx:  metadata.AppendToOutgoingContext(context.Background(), "aaa", "bbb"),
 	}
 }
 

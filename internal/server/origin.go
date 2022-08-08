@@ -21,6 +21,9 @@ type HelloServer struct {
 }
 
 func (h *HelloServer) Echo(ctx context.Context, request *pb.EchoRequest) (*pb.EchoRequest, error) {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		fmt.Println("metadata: ", md)
+	}
 	fmt.Println("recv: ", request)
 	fmt.Println("send: ", request)
 	err := grpc.SendHeader(ctx, header)
@@ -35,6 +38,9 @@ func (h *HelloServer) Echo(ctx context.Context, request *pb.EchoRequest) (*pb.Ec
 }
 
 func (h *HelloServer) ServerStream(request *pb.EchoRequest, server pb.Hello_ServerStreamServer) error {
+	if md, ok := metadata.FromIncomingContext(server.Context()); ok {
+		fmt.Println("metadata: ", md)
+	}
 	fmt.Println("recv: ", request)
 
 	err := server.SendHeader(header)
@@ -54,6 +60,10 @@ func (h *HelloServer) ServerStream(request *pb.EchoRequest, server pb.Hello_Serv
 }
 
 func (h *HelloServer) ClientStream(server pb.Hello_ClientStreamServer) error {
+	if md, ok := metadata.FromIncomingContext(server.Context()); ok {
+		fmt.Println("metadata: ", md)
+	}
+
 	var last *pb.EchoRequest
 	for {
 		req, err := server.Recv()
@@ -76,6 +86,10 @@ func (h *HelloServer) ClientStream(server pb.Hello_ClientStreamServer) error {
 }
 
 func (h *HelloServer) DuplexStream(server pb.Hello_DuplexStreamServer) error {
+	if md, ok := metadata.FromIncomingContext(server.Context()); ok {
+		fmt.Println("metadata: ", md)
+	}
+
 	for i := 0; ; i++ {
 		req, err := server.Recv()
 		if err == io.EOF {

@@ -20,7 +20,7 @@ type HelloClientTester struct {
 func NewHelloClientTester(c pb.HelloClient) *HelloClientTester {
 	return &HelloClientTester{
 		c:   c,
-		ctx: context.Background(),
+		ctx: metadata.AppendToOutgoingContext(context.Background(), "aaa", "bbb"),
 	}
 }
 
@@ -76,12 +76,13 @@ func (h *HelloClientTester) TestClientStream() {
 		fmt.Println("send: ", req)
 	}
 
+	resp, err := s.CloseAndRecv()
+	checkErr(err)
+
 	md, err := s.Header()
 	checkErr(err)
 	fmt.Println("header: ", md)
 
-	resp, err := s.CloseAndRecv()
-	checkErr(err)
 	fmt.Println("recv: ", resp)
 	fmt.Println("trailer: ", s.Trailer())
 }
