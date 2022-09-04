@@ -48,15 +48,9 @@ func (r *RawTester) TestEcho() {
 	checkErr(err)
 	fmt.Println("header: ", md)
 
-	for {
-		err = cs.RecvMsg(resp)
-		if err == io.EOF {
-			fmt.Println("EOF recv")
-			break
-		}
-		checkErr(err)
-		fmt.Println("recv: ", resp)
-	}
+	err = cs.RecvMsg(resp)
+	checkErr(err)
+	fmt.Println("recv: ", resp)
 	fmt.Println("trailer: ", cs.Trailer())
 }
 
