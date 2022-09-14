@@ -27,16 +27,13 @@ func NewHelloClientTester(c pb.HelloClient) *HelloClientTester {
 func (h *HelloClientTester) TestEcho() {
 	req := &pb.EchoRequest{Message: "test"}
 
-	for {
-		var header, trailer metadata.MD
-		resp, err := h.c.Echo(h.ctx, req, grpc.Header(&header), grpc.Trailer(&trailer))
-		checkErr(err)
-		fmt.Println("send: ", req)
-		fmt.Println("recv: ", resp)
-		fmt.Println("header: ", header)
-		fmt.Println("trailer: ", trailer)
-		time.Sleep(time.Second * 5)
-	}
+	var header, trailer metadata.MD
+	resp, err := h.c.Echo(h.ctx, req, grpc.Header(&header), grpc.Trailer(&trailer))
+	checkErr(err)
+	fmt.Println("send: ", req)
+	fmt.Println("recv: ", resp)
+	fmt.Println("header: ", header)
+	fmt.Println("trailer: ", trailer)
 }
 
 func (h *HelloClientTester) TestServerStream() {
