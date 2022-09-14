@@ -9,6 +9,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/zcong1993/grpc-go-beyond/internal/proxy/codec"
@@ -72,6 +73,12 @@ func (s *handler) handler(srv interface{}, serverStream grpc.ServerStream) error
 	outgoingCtx, backendConn, _, err := s.director(serverStream.Context(), fullMethodName)
 	if err != nil {
 		return err
+	}
+
+	// forward user client metadata to upstream server
+	md, ok := metadata.FromIncomingContext(serverStream.Context())
+	if ok {
+		outgoingCtx = metadata.NewOutgoingContext(outgoingCtx, md.Copy())
 	}
 
 	clientCtx, clientCancel := context.WithCancel(outgoingCtx)
