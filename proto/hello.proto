@@ -8,6 +8,11 @@ message EchoRequest {
   string message = 1;
 }
 
+message TestRequest {
+  string message = 1;
+  string name = 2;
+}
+
 service Hello {
   rpc Echo(EchoRequest) returns (EchoRequest);
   rpc ServerStream(EchoRequest) returns (stream EchoRequest);
