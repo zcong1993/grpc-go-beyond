@@ -5,6 +5,7 @@ package proxy
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -13,6 +14,16 @@ import (
 
 	"github.com/zcong1993/grpc-go-beyond/internal/proxy/codec"
 )
+
+var (
+	bizHelloServer = "localhost:8888"
+	bizTestServer  = "localhost:8889"
+)
+
+var addrs = map[string]string{
+	"proto.Hello":     bizHelloServer,
+	"proto.test.Test": bizTestServer,
+}
 
 // StreamDirector returns a gRPC ClientConn to be used to forward the call to.
 //
@@ -31,31 +42,46 @@ type StreamDirector func(ctx context.Context, fullMethodName string) (context.Co
 
 type grpcManager struct {
 	lock  sync.Mutex
-	addr  string
 	conns map[string]*grpc.ClientConn
 }
 
 func NewManager(addr string) *grpcManager {
-	return &grpcManager{conns: make(map[string]*grpc.ClientConn), addr: addr}
+	return &grpcManager{conns: make(map[string]*grpc.ClientConn)}
 }
 
 func (m *grpcManager) StreamDirector(ctx context.Context, fullMethodName string) (context.Context, *grpc.ClientConn, func(), error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
+	service, _ := parseFullMethod(fullMethodName)
+
+	addr, ok := addrs[service]
+	if !ok {
+		return ctx, nil, func() {}, fmt.Errorf("service %s not found", service)
+	}
+
 	// todo: support addr metadata mapping
-	conn, ok := m.conns[m.addr]
+	conn, ok := m.conns[addr]
 	if ok {
 		return ctx, conn, func() {}, nil
 	}
 
-	fmt.Println("create conn")
+	fmt.Println("create conn ", service, addr)
 
-	conn, err := grpc.DialContext(ctx, m.addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithDefaultCallOptions(grpc.CallContentSubtype((&codec.Proxy{}).Name())))
+	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithDefaultCallOptions(grpc.CallContentSubtype((&codec.Proxy{}).Name())))
 	if err != nil {
 		return ctx, nil, func() {}, err
 	}
 
-	m.conns[m.addr] = conn
+	m.conns[addr] = conn
 	return ctx, conn, func() {}, nil
+}
+
+func parseFullMethod(fullMethodName string) (service, method string) {
+	tmpArr := strings.Split(fullMethodName, "/")
+	if len(tmpArr) != 3 {
+		panic("invalid fullMethodName")
+	}
+
+	return tmpArr[1], tmpArr[2]
 }

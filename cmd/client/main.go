@@ -1,58 +1,77 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"log"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/zcong1993/grpc-go-beyond/internal/sign"
+	"github.com/zcong1993/grpc-go-beyond/pb/test"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 
-	"github.com/zcong1993/grpc-go-beyond/internal/client"
-	"github.com/zcong1993/grpc-go-beyond/internal/clienttest"
-	"github.com/zcong1993/grpc-go-beyond/internal/codec"
 	"github.com/zcong1993/grpc-go-beyond/pb"
 )
 
+func signMw(app, key string) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		r, ok := req.(proto.Message)
+		if !ok {
+			return fmt.Errorf("req must be proto.Message")
+		}
+		rawReq, err := proto.Marshal(r)
+		if err != nil {
+			return err
+		}
+		rawReq = append(rawReq, []byte(app)...)
+		s := sign.Sign(key, rawReq)
+		fmt.Println("b64: ", sign.B64(rawReq))
+		fmt.Println("sign: ", s)
+		md := metadata.Pairs("app", app, "sign", s)
+		ctx = metadata.NewOutgoingContext(ctx, md)
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
 func main() {
-	addr := flag.String("addr", "localhost:8888", "server addr")
-	method := flag.String("method", "Echo", "test method: Echo | ServerStream | ClientStream | DuplexStream")
-	clientType := flag.String("type", "", "client type: stream | raw | default")
-	codecType := flag.String("codec", "", "codec type: json, default is proto")
+	addr := flag.String("addr", "localhost:9999", "server addr")
+	app := flag.String("app", "biz1", "app name")
+	method := flag.String("method", "Echo", "method name")
+	signKey := flag.String("sign-key", "biz1", "sign key")
 
 	flag.Parse()
 
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	if *codecType == codec.Name {
-		opts = append(opts, grpc.WithDefaultCallOptions(grpc.CallContentSubtype(codec.Name)))
-	}
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(signMw(*app, *signKey))}
 
 	conn, err := grpc.Dial(*addr, opts...)
 	checkErr(err)
 
-	var tester clienttest.Tester
+	c := pb.NewHelloClient(conn)
+	tc := test.NewTestClient(conn)
 
-	switch *clientType {
-	case "stream":
-		c := client.NewStreamClient(conn)
-		tester = clienttest.NewHelloClientTester(c)
-	case "raw":
-		tester = clienttest.NewRawTester(conn)
-	default:
-		c := pb.NewHelloClient(conn)
-		tester = clienttest.NewHelloClientTester(c)
-	}
+	ctx := context.Background()
+	fmt.Println("call ", *method)
 
 	switch *method {
 	case "Echo":
-		tester.TestEcho()
-	case "ServerStream":
-		tester.TestServerStream()
-	case "ClientStream":
-		tester.TestClientStream()
-	case "DuplexStream":
-		tester.TestDuplexStream()
-	default:
-		log.Fatal("invalid method")
+		resp, err := c.Echo(ctx, &pb.EchoRequest{Message: "hello"})
+		checkErr(err)
+		fmt.Println("resp: ", resp)
+	case "Echo2":
+		resp, err := c.Echo2(ctx, &pb.EchoRequest{Message: "hello"})
+		checkErr(err)
+		fmt.Println("resp: ", resp)
+	case "Test":
+		resp, err := tc.Test(ctx, &test.TestRequest{Name: "hello"})
+		checkErr(err)
+		fmt.Println("resp: ", resp)
+	case "Test1":
+		resp, err := tc.Test1(ctx, &test.TestRequest{Name: "hello"})
+		checkErr(err)
+		fmt.Println("resp: ", resp)
 	}
 }
 

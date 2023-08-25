@@ -52,7 +52,7 @@ type Proxy struct {
 
 // Frame holds the proxy transported data.
 type Frame struct {
-	payload []byte
+	Payload []byte
 }
 
 // ProtoMessage tags a frame as valid proto message.
@@ -65,7 +65,7 @@ func (p *Proxy) Marshal(v interface{}) ([]byte, error) {
 		return p.parentCodec.Marshal(v)
 	}
 
-	return out.payload, nil
+	return out.Payload, nil
 }
 
 // Unmarshal implements the encoding.Codec interface method.
@@ -74,7 +74,7 @@ func (p *Proxy) Unmarshal(data []byte, v interface{}) error {
 	if !ok {
 		return p.parentCodec.Unmarshal(data, v)
 	}
-	dst.payload = data
+	dst.Payload = data
 	return nil
 }
 

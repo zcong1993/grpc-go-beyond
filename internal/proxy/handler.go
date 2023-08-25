@@ -4,8 +4,11 @@
 package proxy
 
 import (
+	"fmt"
 	"io"
 
+	"github.com/zcong1993/grpc-go-beyond/internal/sign"
+	"golang.org/x/exp/slices"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -18,6 +21,22 @@ import (
 var clientStreamDescForProxying = &grpc.StreamDesc{
 	ServerStreams: true,
 	ClientStreams: true,
+}
+
+type appInfo struct {
+	methods []string
+	signKey string
+}
+
+var aclMap = map[string]appInfo{
+	"biz1": {
+		methods: []string{"/proto.Hello/Echo", "/proto.test.Test/Test"},
+		signKey: "biz1",
+	},
+	"biz2": {
+		methods: []string{"/proto.Hello/Echo2", "/proto.test.Test/Test1"},
+		signKey: "biz2",
+	},
 }
 
 // RegisterService sets up a proxy handler for a particular gRPC service and method.
@@ -81,6 +100,25 @@ func (s *handler) handler(srv interface{}, serverStream grpc.ServerStream) error
 		outgoingCtx = metadata.NewOutgoingContext(outgoingCtx, md.Copy())
 	}
 
+	// check acl
+	app := md.Get("app")
+	if len(app) == 0 {
+		return status.New(codes.PermissionDenied, "app not found in metadata").Err()
+	}
+	info, ok := aclMap[app[0]]
+	if !ok {
+		return status.New(codes.PermissionDenied, "app not in acl").Err()
+	}
+
+	if !slices.Contains(info.methods, fullMethodName) {
+		return status.New(codes.PermissionDenied, "can not access").Err()
+	}
+
+	signInfo := md.Get("sign")
+	if len(signInfo) == 0 {
+		return status.New(codes.PermissionDenied, "sign not found in metadata").Err()
+	}
+
 	clientCtx, clientCancel := context.WithCancel(outgoingCtx)
 	defer clientCancel()
 	// TODO(mwitkow): Add a `forwarded` header to metadata, https://en.wikipedia.org/wiki/X-Forwarded-For.
@@ -92,7 +130,7 @@ func (s *handler) handler(srv interface{}, serverStream grpc.ServerStream) error
 	// Channels do not have to be closed, it is just a control flow mechanism, see
 	// https://groups.google.com/forum/#!msg/golang-nuts/pZwdYRGxCIk/qpbHxRRPJdUJ
 	s2cErrChan := s.forwardServerToClient(serverStream, clientStream)
-	c2sErrChan := s.forwardClientToServer(clientStream, serverStream)
+	c2sErrChan := s.forwardClientToServer(clientStream, serverStream, info.signKey, signInfo[0], app[0])
 	// We don't know which side is going to stop sending first, so we need a select between the two.
 	for i := 0; i < 2; i++ {
 		select {
@@ -123,13 +161,22 @@ func (s *handler) handler(srv interface{}, serverStream grpc.ServerStream) error
 	return status.Errorf(codes.Internal, "gRPC proxying should never reach this stage.")
 }
 
-func (s *handler) forwardClientToServer(src grpc.ClientStream, dst grpc.ServerStream) chan error {
+func (s *handler) forwardClientToServer(src grpc.ClientStream, dst grpc.ServerStream, signKey string, reqSign string, app string) chan error {
 	ret := make(chan error, 1)
 	go func() {
 		f := &codec.Frame{}
 		for i := 0; ; i++ {
 			if err := src.RecvMsg(f); err != nil {
 				ret <- err // this can be io.EOF which is happy case
+				break
+			}
+			data := make([]byte, len(f.Payload))
+			copy(data, f.Payload)
+			data = append(data, []byte(app)...)
+			ss := sign.Sign(signKey, data)
+			fmt.Println("check sign, ", reqSign, ss)
+			if reqSign != ss {
+				ret <- status.Errorf(codes.PermissionDenied, "sign not match")
 				break
 			}
 			if i == 0 {

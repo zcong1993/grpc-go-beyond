@@ -23,10 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HelloClient interface {
 	Echo(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (*EchoRequest, error)
-	ServerStream(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (Hello_ServerStreamClient, error)
-	ClientStream(ctx context.Context, opts ...grpc.CallOption) (Hello_ClientStreamClient, error)
-	DuplexStream(ctx context.Context, opts ...grpc.CallOption) (Hello_DuplexStreamClient, error)
-	Any(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (*TestAny, error)
+	Echo2(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (*EchoRequest, error)
 }
 
 type helloClient struct {
@@ -46,106 +43,9 @@ func (c *helloClient) Echo(ctx context.Context, in *EchoRequest, opts ...grpc.Ca
 	return out, nil
 }
 
-func (c *helloClient) ServerStream(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (Hello_ServerStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Hello_ServiceDesc.Streams[0], "/proto.Hello/ServerStream", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &helloServerStreamClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Hello_ServerStreamClient interface {
-	Recv() (*EchoRequest, error)
-	grpc.ClientStream
-}
-
-type helloServerStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *helloServerStreamClient) Recv() (*EchoRequest, error) {
-	m := new(EchoRequest)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *helloClient) ClientStream(ctx context.Context, opts ...grpc.CallOption) (Hello_ClientStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Hello_ServiceDesc.Streams[1], "/proto.Hello/ClientStream", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &helloClientStreamClient{stream}
-	return x, nil
-}
-
-type Hello_ClientStreamClient interface {
-	Send(*EchoRequest) error
-	CloseAndRecv() (*EchoRequest, error)
-	grpc.ClientStream
-}
-
-type helloClientStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *helloClientStreamClient) Send(m *EchoRequest) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *helloClientStreamClient) CloseAndRecv() (*EchoRequest, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(EchoRequest)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *helloClient) DuplexStream(ctx context.Context, opts ...grpc.CallOption) (Hello_DuplexStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Hello_ServiceDesc.Streams[2], "/proto.Hello/DuplexStream", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &helloDuplexStreamClient{stream}
-	return x, nil
-}
-
-type Hello_DuplexStreamClient interface {
-	Send(*EchoRequest) error
-	Recv() (*EchoRequest, error)
-	grpc.ClientStream
-}
-
-type helloDuplexStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *helloDuplexStreamClient) Send(m *EchoRequest) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *helloDuplexStreamClient) Recv() (*EchoRequest, error) {
-	m := new(EchoRequest)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *helloClient) Any(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (*TestAny, error) {
-	out := new(TestAny)
-	err := c.cc.Invoke(ctx, "/proto.Hello/Any", in, out, opts...)
+func (c *helloClient) Echo2(ctx context.Context, in *EchoRequest, opts ...grpc.CallOption) (*EchoRequest, error) {
+	out := new(EchoRequest)
+	err := c.cc.Invoke(ctx, "/proto.Hello/Echo2", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -157,10 +57,7 @@ func (c *helloClient) Any(ctx context.Context, in *EchoRequest, opts ...grpc.Cal
 // for forward compatibility
 type HelloServer interface {
 	Echo(context.Context, *EchoRequest) (*EchoRequest, error)
-	ServerStream(*EchoRequest, Hello_ServerStreamServer) error
-	ClientStream(Hello_ClientStreamServer) error
-	DuplexStream(Hello_DuplexStreamServer) error
-	Any(context.Context, *EchoRequest) (*TestAny, error)
+	Echo2(context.Context, *EchoRequest) (*EchoRequest, error)
 	mustEmbedUnimplementedHelloServer()
 }
 
@@ -171,17 +68,8 @@ type UnimplementedHelloServer struct {
 func (UnimplementedHelloServer) Echo(context.Context, *EchoRequest) (*EchoRequest, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Echo not implemented")
 }
-func (UnimplementedHelloServer) ServerStream(*EchoRequest, Hello_ServerStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method ServerStream not implemented")
-}
-func (UnimplementedHelloServer) ClientStream(Hello_ClientStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method ClientStream not implemented")
-}
-func (UnimplementedHelloServer) DuplexStream(Hello_DuplexStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method DuplexStream not implemented")
-}
-func (UnimplementedHelloServer) Any(context.Context, *EchoRequest) (*TestAny, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Any not implemented")
+func (UnimplementedHelloServer) Echo2(context.Context, *EchoRequest) (*EchoRequest, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Echo2 not implemented")
 }
 func (UnimplementedHelloServer) mustEmbedUnimplementedHelloServer() {}
 
@@ -214,93 +102,20 @@ func _Hello_Echo_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Hello_ServerStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(EchoRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(HelloServer).ServerStream(m, &helloServerStreamServer{stream})
-}
-
-type Hello_ServerStreamServer interface {
-	Send(*EchoRequest) error
-	grpc.ServerStream
-}
-
-type helloServerStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *helloServerStreamServer) Send(m *EchoRequest) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _Hello_ClientStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(HelloServer).ClientStream(&helloClientStreamServer{stream})
-}
-
-type Hello_ClientStreamServer interface {
-	SendAndClose(*EchoRequest) error
-	Recv() (*EchoRequest, error)
-	grpc.ServerStream
-}
-
-type helloClientStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *helloClientStreamServer) SendAndClose(m *EchoRequest) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *helloClientStreamServer) Recv() (*EchoRequest, error) {
-	m := new(EchoRequest)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _Hello_DuplexStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(HelloServer).DuplexStream(&helloDuplexStreamServer{stream})
-}
-
-type Hello_DuplexStreamServer interface {
-	Send(*EchoRequest) error
-	Recv() (*EchoRequest, error)
-	grpc.ServerStream
-}
-
-type helloDuplexStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *helloDuplexStreamServer) Send(m *EchoRequest) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *helloDuplexStreamServer) Recv() (*EchoRequest, error) {
-	m := new(EchoRequest)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _Hello_Any_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Hello_Echo2_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(EchoRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HelloServer).Any(ctx, in)
+		return srv.(HelloServer).Echo2(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Hello/Any",
+		FullMethod: "/proto.Hello/Echo2",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HelloServer).Any(ctx, req.(*EchoRequest))
+		return srv.(HelloServer).Echo2(ctx, req.(*EchoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -317,27 +132,10 @@ var Hello_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Hello_Echo_Handler,
 		},
 		{
-			MethodName: "Any",
-			Handler:    _Hello_Any_Handler,
+			MethodName: "Echo2",
+			Handler:    _Hello_Echo2_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "ServerStream",
-			Handler:       _Hello_ServerStream_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "ClientStream",
-			Handler:       _Hello_ClientStream_Handler,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "DuplexStream",
-			Handler:       _Hello_DuplexStream_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "proto/hello.proto",
 }
