@@ -3,11 +3,27 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/zcong1993/template-go-cli)](https://goreportcard.com/report/github.com/zcong1993/template-go-cli)
 -->
 
-> low level grpc go server/client demo.
+> grpc schemaless proxy
 
-- [internal/client/stream.go](internal/client/stream.go) 使用 `grpc ClientStream` 实现带有类型的 grpc client
-- [internal/server/stream.go](internal/server/stream.go) 使用 `grpc StreamHandler` 实现 grpc server
-- [internal/clienttest/raw.go](internal/clienttest/raw.go) 使用 `grpc ClientStream` 直接和服务端交互
+```bash
+# start bizhello
+go run ./cmd/bizhello
+# start biztest
+go run ./cmd/biztest
+# start proxy
+go run ./cmd/proxy
+# run test
+# 1. biz1 call Echo
+go run ./cmd/client -method Echo -sign-key biz1 -app biz1
+# 2. biz1 call Test
+go run ./cmd/client -method Test -sign-key biz1 -app biz1
+# 3. biz2 call Echo2
+go run ./cmd/client -method Echo2 -sign-key biz2 -app biz2
+# 4. no access
+go run ./cmd/client -method Echo2 -sign-key biz1 -app biz1
+# 5. sign error
+go run ./cmd/client -method Echo -sign-key biz2 -app biz1
+```
 
 ## License
 
