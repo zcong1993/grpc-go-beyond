@@ -31,6 +31,7 @@ func signMw(app, key string) grpc.UnaryClientInterceptor {
 		fmt.Println("b64: ", sign.B64(rawReq))
 		fmt.Println("sign: ", s)
 		md := metadata.Pairs("app", app, "sign", s)
+		//md := metadata.Pairs()
 		ctx = metadata.NewOutgoingContext(ctx, md)
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}

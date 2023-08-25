@@ -24,7 +24,7 @@ func (m *module) Test(ctx context.Context, request *test.TestRequest) (*test.Tes
 
 func (m *module) Test1(ctx context.Context, request *test.TestRequest) (*test.TestRequest, error) {
 	fmt.Println("Test1 receive: ", request.Name)
-	panic("implement me")
+	return request, nil
 }
 
 func main() {
