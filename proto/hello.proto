@@ -3,9 +3,21 @@ syntax = "proto3";
 package proto;
 option go_package = "github.com/zcong1993/grpc-go-beyond/pb";
 
+import "google/protobuf/any.proto";
+
 
 message EchoRequest {
   string message = 1;
+}
+
+message TestAny {
+  string message = 1;
+  google.protobuf.Any any = 2;
+  oneof test_oneof {
+    string name = 4;
+    EchoRequest echo_request = 9;
+    google.protobuf.Any oneof_any = 10;
+  }
 }
 
 service Hello {
@@ -13,4 +25,5 @@ service Hello {
   rpc ServerStream(EchoRequest) returns (stream EchoRequest);
   rpc ClientStream(stream EchoRequest) returns (EchoRequest);
   rpc DuplexStream(stream EchoRequest) returns (stream EchoRequest);
+  rpc Any(EchoRequest) returns (TestAny);
 }

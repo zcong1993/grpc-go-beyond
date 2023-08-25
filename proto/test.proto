@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package proto.test;
+option go_package = "github.com/zcong1993/grpc-go-beyond/pb/test";
+
+message TestRequest {
+  string name = 1;
+}

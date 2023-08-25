@@ -8,6 +8,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 
 	"github.com/zcong1993/grpc-go-beyond/pb"
 )
@@ -28,12 +29,14 @@ func (h *HelloClientTester) TestEcho() {
 	req := &pb.EchoRequest{Message: "test"}
 
 	var header, trailer metadata.MD
-	resp, err := h.c.Echo(h.ctx, req, grpc.Header(&header), grpc.Trailer(&trailer))
+	var p peer.Peer
+	resp, err := h.c.Echo(h.ctx, req, grpc.Header(&header), grpc.Trailer(&trailer), grpc.Peer(&p))
 	checkErr(err)
 	fmt.Println("send: ", req)
 	fmt.Println("recv: ", resp)
 	fmt.Println("header: ", header)
 	fmt.Println("trailer: ", trailer)
+	fmt.Println("peer: ", p.Addr.String())
 }
 
 func (h *HelloClientTester) TestServerStream() {

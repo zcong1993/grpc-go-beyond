@@ -9,4 +9,4 @@ PROTO_PREFIX=github.com/zcong1993/grpc-go-beyond
 
 protoc --go_out=. --go_opt=module=$PROTO_PREFIX \
     --go-grpc_out=. --go-grpc_opt=module=$PROTO_PREFIX \
-    proto/hello.proto
+    proto/*.proto
